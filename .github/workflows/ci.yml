@@ -39,10 +39,12 @@ jobs:
         - { name: Linux Clang,                    os: ubuntu-22.04, flags: -DCMAKE_CXX_COMPILER=clang++ -DSFML_RUN_DISPLAY_TESTS=ON -GNinja , gcovr_options: '--gcov-executable="llvm-cov-$CLANG_VERSION gcov"' }
         - { name: Linux GCC DRM,                  os: ubuntu-22.04, flags: -DSFML_USE_DRM=ON -DSFML_RUN_DISPLAY_TESTS=OFF -GNinja }
         - { name: Linux GCC OpenGL ES,            os: ubuntu-22.04, flags: -DSFML_OPENGL_ES=ON -DSFML_RUN_DISPLAY_TESTS=ON -GNinja }
-        - { name: macOS,                          os: macos-12, flags: -GNinja }
-        - { name: macOS Xcode,                    os: macos-12, flags: -GXcode }
-        - { name: iOS,                            os: macos-12, flags: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 }
-        - { name: iOS Xcode,                      os: macos-12, flags: -DCMAKE_SYSTEM_NAME=iOS -GXcode -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO }
+        - { name: macOS Intel,                    os: macos-13, flags: -GNinja }
+        - { name: macOS Intel Xcode,              os: macos-13, flags: -GXcode }
+        - { name: macOS M1,                       os: macos-14, flags: -GNinja -DCMAKE_OSX_ARCHITECTURES=arm64 }
+        - { name: macOS M1 Xcode,                 os: macos-14, flags: -GXcode -DCMAKE_OSX_ARCHITECTURES=arm64 }
+        - { name: iOS,                            os: macos-13, flags: -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 }
+        - { name: iOS Xcode,                      os: macos-13, flags: -DCMAKE_SYSTEM_NAME=iOS -GXcode -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO }
         config:
         - { name: Shared, flags: -DBUILD_SHARED_LIBS=TRUE }
         - { name: Static, flags: -DBUILD_SHARED_LIBS=FALSE }
@@ -67,7 +69,7 @@ jobs:
         - platform: { name: Android, os: ubuntu-22.04 }
           config: { name: arm64-v8a (API 33), flags: -GNinja -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=33 -DSFML_BUILD_TEST_SUITE=FALSE -DCMAKE_ANDROID_NDK=$ANDROID_SDK_ROOT/ndk/26.1.10909125 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_ANDROID_STL_TYPE=c++_shared, arch: arm64-v8a, api: 33 }
           type: { name: Debug, flags: -DCMAKE_BUILD_TYPE=Debug }
-        - platform: { name: macOS , os: macos-12 }
+        - platform: { name: macOS , os: macos-13 }
           config: { name: System Deps, flags: -GNinja -DBUILD_SHARED_LIBS=TRUE -DSFML_USE_SYSTEM_DEPS=TRUE }
 
     steps:
@@ -109,6 +111,10 @@ jobs:
         # Do not run updates until GitHub has fixed all the issues: https://github.com/orgs/Homebrew/discussions/4612
         # brew update
         brew install gcovr ccache || true
+
+    - name: Install macOS System Dependencies
+      if: matrix.config.name == 'System Deps'
+      run: brew install libvorbis libogg
 
     # In addition to installing a known working version of CCache, this action also takes care of saving and restoring the cache for us
     # Additionally it outputs information at the end of each job that helps us to verify if the cache is working properly
